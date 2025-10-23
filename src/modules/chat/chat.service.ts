@@ -3,6 +3,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import OpenAI from 'openai';
 import { Chat } from 'src/schemas/chat.schema';
+import { Scrapper } from 'src/schemas/scrapper.schema';
 
 @Injectable()
 export class ChatService {
@@ -12,15 +13,19 @@ export class ChatService {
 
   constructor(
     @Inject('TENANT_MODELS')
-    private readonly models: { ChatModel: Model<Chat> },
+    private readonly models: { ChatModel: Model<Chat>, ScrapperModel: Model<Scrapper> },
   ) {}
 
   async getReply(message: string,tenantId: string): Promise<{ reply: string }> {
-    if (!tenantId) throw new NotFoundException('Tenant ID missing');
-
+    if (!tenantId) throw new NotFoundException('Tenant ID missing'); 
+    const pages = await this.models.ScrapperModel.find({ tenantId }).limit(5).lean();
+    const context = pages.map(p => p.text.slice(0, 1000)).join('\n\n');
     const completion = await this.openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: message }],
+       messages: [
+        { role: 'system', content: 'You are a helpful assistant answering based on website data.' },
+        { role: 'user', content: `Context:\n${context}\n\nQuestion: ${message}` },
+      ],
     });
 
     const reply = completion.choices[0].message?.content ?? 'No response';

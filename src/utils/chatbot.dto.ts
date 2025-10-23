@@ -13,6 +13,10 @@ export class CreateChatbotDto {
 
   @IsNotEmpty()
   @IsString()
+  url?: string;
+  
+  @IsNotEmpty()
+  @IsString()
   planId: string;
 
   @IsOptional()
@@ -22,6 +26,8 @@ export class CreateChatbotDto {
   @IsOptional()
   @IsString()
   color?: string;
+
+
 }
 
 export class UpdateChatbotStatusDto {

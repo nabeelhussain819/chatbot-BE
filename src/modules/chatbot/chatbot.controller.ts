@@ -27,7 +27,7 @@ getChatbotById(@Req() req, @Query('id') id: string) {
 
    @Post('/create-chatbot')
   createChatbot(@Req() req,@Body() dto: CreateChatbotDto) {
-    const tenantId = req.headers['x-tenant-id'];
+  const tenantId = req.headers['x-tenant-id'];
     return this.chatbotService.createChatbot(tenantId, dto);
   }
 

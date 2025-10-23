@@ -2,15 +2,23 @@
 import { Injectable, Inject, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { Model } from 'mongoose';
+import OpenAI from 'openai';
 import { Chatbot } from 'src/schemas/chatbot.schema';
+import { Scrapper } from 'src/schemas/scrapper.schema';
 import { CreateChatbotDto, ResubscribeChatbotDto, UpdateChatbotStatusDto } from 'src/utils/chatbot.dto';
+import { ScraperService } from '../scrapper/scrapper.service';
+import { chunkText } from 'src/utils/text-cleaner';
 
 @Injectable()
 export class ChatbotService {
+  private openai: OpenAI;
   constructor(
+    private readonly ScraperService: ScraperService,
     @Inject('TENANT_MODELS')
-    private readonly models: { ChatbotModel: Model<Chatbot> },
-  ) {}
+    private readonly models: { ChatbotModel: Model<Chatbot>, ScrapperModel: Model<Scrapper> },
+  ) {this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });}
 
   /** Get the chatbot created by the current tenant */
 async getMyChatbot(tenantId: string, apiKey: string) {
@@ -21,8 +29,7 @@ async getMyChatbot(tenantId: string, apiKey: string) {
   if (!apiKey) {
     throw new NotFoundException('API key missing in request');
   }
-
-  const chatbot = await this.models.ChatbotModel.findOne({ tenantId, apiKey });
+  const chatbot = await this.models.ChatbotModel.findOne({ apiKey });
 
   if (!chatbot) {
     throw new NotFoundException('No chatbot found for this tenant or API key is incorrect');
@@ -56,14 +63,13 @@ async getMyChatbot(tenantId: string, apiKey: string) {
   }
 
   /** Create a new chatbot for this tenant */
-async createChatbot(tenantId, body: CreateChatbotDto) {
-    const existing = await this.models.ChatbotModel.findOne({ tenantId, name: body.name });
-    if (existing) {
-      throw new BadRequestException('Chatbot with this name already exists.');
+async createChatbot(tenantId: string,body: CreateChatbotDto) {
+    if (!body.url) {
+      throw new BadRequestException('URL is required');
     }
-
     const apiKey = randomBytes(16).toString('hex');
-
+    const training = await this.trainFromUrl(body.url, tenantId);
+    if(training.length === 0) throw new BadRequestException('No training data found.');
     const chatbot = new this.models.ChatbotModel({
       tenantId,
       name: body.name,
@@ -111,5 +117,34 @@ async activeChatbot(body: UpdateChatbotStatusDto, tenantId: string) {
     await chatbot.save();
 
     return { message: 'Subscription renewed successfully.' };
+  }
+
+ async createEmbeddings(textChunks: string[]): Promise<number[][]> {
+  if (!textChunks.length) return [];
+  try {
+    const response = await this.openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: textChunks, 
+    });
+    return response.data.map((d) => d.embedding);
+  } catch (error) {
+    console.error('Error generating embeddings:', error);
+    throw new Error('Failed to create embeddings');
+  }
+}
+
+  async trainFromUrl(url: string, tenantId: string) {
+    const { title, text, links } = await this.ScraperService.scrapeWebsite(url);
+    const chunks = chunkText(text);
+    const embeddings = await this.createEmbeddings(chunks);
+    await this.models.ScrapperModel.create({
+      tenantId,
+      url,
+      title,
+      text,
+      links,
+      embedding: embeddings.flat(),
+    });
+    return embeddings;
   }
 }

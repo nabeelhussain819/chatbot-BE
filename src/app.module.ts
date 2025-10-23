@@ -17,6 +17,8 @@ import { ChatModule } from './modules/chat/chat.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PlanModule } from './modules/plan/plan.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
+import { ScraperService } from './modules/scrapper/scrapper.service';
+import { ScrapperModule } from './modules/scrapper/scrapper.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,9 +34,10 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
     DashboardModule,
     PlanModule,
     ChatbotModule,
+    ScrapperModule,
   ],
   controllers: [AppController, AuthController],
-  providers: [AppService, AuthService, OtpService, MailerService],
+  providers: [AppService, AuthService, OtpService, MailerService, ScraperService],
   exports: [MongooseModule],
 })
 export class AppModule {}

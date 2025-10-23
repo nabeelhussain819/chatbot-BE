@@ -9,6 +9,7 @@ import {  CardSchema } from 'src/schemas/card.schema';
 import { ChatSchema } from 'src/schemas/chat.schema';
 import { ChatbotSchema } from 'src/schemas/chatbot.schema';
 import { PlanSchema } from 'src/schemas/plans.schema';
+import { ScrapperSchema } from 'src/schemas/scrapper.schema';
 
 export const TenantModelProvider: FactoryProvider = {
   provide: 'TENANT_MODELS',
@@ -20,9 +21,8 @@ export const TenantModelProvider: FactoryProvider = {
     tenantModel: Model<Tenant>,
   ) => {
     const tenantId = req.headers['x-tenant-id'] as string;
-  
     if (!tenantId) {
-      const isPublicRoute = req.path.startsWith('/auth') || req.path === '/plans' || req.path == '/chatbot/my-chatbot';
+      const isPublicRoute = req.path.startsWith('/auth') || req.path === '/plans' ;
       if (isPublicRoute) {
         return null;
       }
@@ -57,6 +57,10 @@ export const TenantModelProvider: FactoryProvider = {
     if (!connection.models.Plan)
       models['PlanModel'] = connection.model('Plan', PlanSchema);
     else models['PlanModel'] = connection.models.Plan;
+
+     if (!connection.models.Scrapper)
+      models['ScrapperModel'] = connection.model('Scrapper', ScrapperSchema);
+    else models['ScrapperModel'] = connection.models.Scrapper;
 
   return models;
   },
