@@ -3,6 +3,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import OpenAI from 'openai';
 import { Chat } from 'src/schemas/chat.schema';
+import { Chatbot } from 'src/schemas/chatbot.schema';
 import { Scrapper } from 'src/schemas/scrapper.schema';
 
 @Injectable()
@@ -13,11 +14,14 @@ export class ChatService {
 
   constructor(
     @Inject('TENANT_MODELS')
-    private readonly models: { ChatModel: Model<Chat>, ScrapperModel: Model<Scrapper> },
+    private readonly models: { ChatModel: Model<Chat>, ScrapperModel: Model<Scrapper>, ChatbotModel: Model<Chatbot> },
   ) {}
 
-  async getReply(message: string,tenantId: string): Promise<{ reply: string }> {
+  async getReply(message: string,tenantId: string, apiKey: string): Promise<{ reply: string }> {
     if (!tenantId) throw new NotFoundException('Tenant ID missing'); 
+    const chatbot = await this.models.ChatbotModel.findOne({ apiKey });
+    if (!chatbot) throw new NotFoundException('Chatbot not found');
+    
     const pages = await this.models.ScrapperModel.find({ tenantId }).limit(5).lean();
     const context = pages.map(p => p.text.slice(0, 1000)).join('\n\n');
     const completion = await this.openai.chat.completions.create({
@@ -34,13 +38,21 @@ export class ChatService {
       tenantId,
       message,
       reply,
+      chatbotId: chatbot._id
     });
 
     return { reply };
   }
 
   async getChatHistory(tenantId: string) {
-    if (!tenantId) throw new NotFoundException('Tenant ID missing');
-    return this.models.ChatModel.find({ tenantId }).sort({ createdAt: -1 });
+if (!tenantId) throw new NotFoundException('Tenant ID missing');
+  const chats = await this.models.ChatModel
+    .find({ tenantId })
+    .populate('chatbotId')
+    .sort({ createdAt: -1 })
+    .exec();
+
+  return chats;
   }
+  
 }

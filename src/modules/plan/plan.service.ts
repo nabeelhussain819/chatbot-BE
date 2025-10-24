@@ -25,7 +25,7 @@ export class PlanService {
       {
         name: 'Starter',
         price: '$0',
-        description: 'Perfect for trying out ChatBot Pro',
+        description: 'Perfect for trying out AfterShock AI Chatbot',
         features: [
           'Up to 100 messages/month',
           'Basic AI responses',
