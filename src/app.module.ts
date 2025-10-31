@@ -19,6 +19,13 @@ import { PlanModule } from './modules/plan/plan.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { ScraperService } from './modules/scrapper/scrapper.service';
 import { ScrapperModule } from './modules/scrapper/scrapper.module';
+import { KnowledgeBaseModule } from './modules/knowledge-base/knowledge-base.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { PackageService } from './modules/package/package.service';
+import { PackageController } from './modules/package/package.controller';
+import { PackageModule } from './modules/package/package.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import * as path from 'path';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,9 +42,16 @@ import { ScrapperModule } from './modules/scrapper/scrapper.module';
     PlanModule,
     ChatbotModule,
     ScrapperModule,
+    KnowledgeBaseModule,
+    BillingModule,
+    PackageModule,
+     ServeStaticModule.forRoot({
+      rootPath: path.join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',  // This will serve images at /uploads URL
+    }),
   ],
-  controllers: [AppController, AuthController],
-  providers: [AppService, AuthService, OtpService, MailerService, ScraperService],
+  controllers: [AppController, AuthController, PackageController],
+  providers: [AppService, AuthService, OtpService, MailerService, ScraperService, PackageService],
   exports: [MongooseModule],
 })
 export class AppModule {}

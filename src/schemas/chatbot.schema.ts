@@ -9,18 +9,23 @@ export class Chatbot extends Document {
 
   @Prop({ required: true })
   name: string;
+   @Prop({ required: true })
+  sub_title: string;
 
   @Prop({ default: true })
   isActive: boolean;
 
-  @Prop({ default: 0 })
-  apiRequests: number;
+  @Prop({ required: true })
+  default_message: string;
 
-  @Prop({ default: 0 })
-  totalConversations: number;
+ @Prop({ required: true })
+  position: string;
 
-  @Prop({ default: 0 })
-  avgResponseTime: number;
+   @Prop({ required: true })
+  avatar_img: string;
+
+   @Prop({ required: true })
+  is_avatar: boolean;
 
   @Prop({ required: true })
   apiKey: string;
@@ -37,8 +42,12 @@ export class Chatbot extends Document {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Card', required: true })
   cardId: mongoose.Schema.Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Plan', required: true })
-  planId: mongoose.Schema.Types.ObjectId;
+  
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'KnowledgeBase', required: true })
+  knowledgeId: mongoose.Schema.Types.ObjectId;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Package', required: true })
+  packageId: mongoose.Schema.Types.ObjectId;
 
   @Prop() subscriptionRenewedAt?: Date;
 }

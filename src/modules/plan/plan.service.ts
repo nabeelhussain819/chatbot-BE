@@ -24,22 +24,25 @@ export class PlanService {
     const planData = [
       {
         name: 'Starter',
-        price: '$0',
-        description: 'Perfect for trying out AfterShock AI Chatbot',
+        price: '$100',
+        total_chatbot: 1,
+        default: true,
+        total_request: 1000,
+        duration: '30 days',
+        description: 'For small businesses',
         features: [
-          'Up to 100 messages/month',
+          'Up to 1,000 messages/month',
           'Basic AI responses',
-          'Email support',
+          '24/7 support',
           '1 chatbot',
-          'Community access',
-        ],
-        cta: 'Get Started',
-        popular: false,
+          'Custom branding',
+          'Analytics dashboard',
+        ]
       },
       {
         name: 'Pro',
-        price: '$29',
         description: 'For growing businesses',
+        duration: '60 days',
         features: [
           'Up to 10,000 messages/month',
           'Advanced AI responses',
@@ -48,12 +51,15 @@ export class PlanService {
           'Custom branding',
           'Analytics dashboard',
         ],
-        cta: 'Start Free Trial',
-        popular: true,
+        price: '$500',
+        total_chatbot: 5,
+        default: false,
+        total_request: 5000,
       },
       {
         name: 'Enterprise',
         price: 'Custom',
+        duration: 'Unlimited',
         description: 'For large organizations',
         features: [
           'Unlimited messages',
@@ -65,7 +71,9 @@ export class PlanService {
           'Custom deployment',
         ],
         cta: 'Contact Sales',
-        popular: false,
+        default: false,
+        total_chatbot: 10,
+        total_request: 10000,
       },
     ];
 
@@ -82,5 +90,12 @@ export class PlanService {
   }
    async getPlanByName(name: string) {
     return this.planModel.findOne({name}).exec();
+  }
+  async getDefaultPlan () {
+    const id = await this.planModel.findOne({default: true}).exec();
+    return id
+  }
+  async getExistingPlans({id}) {
+    return this.planModel.find({_id:id}).exec();
   }
 }

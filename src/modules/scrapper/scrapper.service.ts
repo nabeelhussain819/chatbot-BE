@@ -31,12 +31,9 @@ export class ScraperService {
 
   private async fetchHTML(url: string): Promise<string> {
     try {
-      // Try simple request first
       const { data } = await axios.get(url, { timeout: 15000 });
       if (data && data.length > 1000) return data;
     } catch (_) {}
-
-    // Fallback to Puppeteer for JS-rendered content
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });

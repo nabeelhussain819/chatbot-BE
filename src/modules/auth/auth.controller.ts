@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 // src/auth/auth.controller.ts
-import { Body, Controller, HttpCode, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
 import {
@@ -60,5 +60,11 @@ export class AuthController {
   @Post('verify-otp')
   async verifyOtp(@Body() Update2FADto: Update2FADto) {
     return this.otpService.verifyOtp(Update2FADto.email, Update2FADto.otp);
+  }
+
+  @Get('getData')
+  async getAllUsers(@Req() req) {
+    const tenantId = req.headers['x-tenant-id'];
+    return this.authService.getUserData(tenantId);
   }
 }

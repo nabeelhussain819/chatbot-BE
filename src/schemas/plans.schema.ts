@@ -19,8 +19,15 @@ export class Plan extends Document {
   @Prop({ required: false })
   features: Array<string>;
 
+  @Prop({ required: false, default: true })
+  default: boolean;
+
   @Prop({ required: false })
-  popular: boolean;
+  total_chatbot: string;
+
+   @Prop({ required: false })
+  total_request: string;
+
 }
 
 export const PlanSchema = SchemaFactory.createForClass(Plan);

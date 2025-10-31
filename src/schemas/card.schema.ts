@@ -25,6 +25,9 @@ export class Card extends Document {
 
   @Prop({ required: true })
   tenantId: string;
+
+    @Prop({ default: Date.now })
+  createdAt: Date;
 }
 
 export const CardSchema = SchemaFactory.createForClass(Card);

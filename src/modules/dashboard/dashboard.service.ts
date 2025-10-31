@@ -24,7 +24,6 @@ export class DashboardService {
       throw new InternalServerErrorException('Chat or Chatbot model not found for this tenant.');
     }
 
-    // Fetch metrics concurrently
     const [totalChats, chatbots, recentChats] = await Promise.all([
       ChatModel.countDocuments({ tenantId }),
       ChatbotModel.find({ tenantId }),

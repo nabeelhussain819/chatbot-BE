@@ -24,19 +24,14 @@ export class AuthService {
     @InjectModel(Tenant.name)
     private tenantModel: Model<Tenant>,
 
-    // dynamically injected tenant-specific models (per request)
     @Inject('TENANT_MODELS')
     private readonly models: { UserModel: Model<User> },
   ) {}
 
-  /**
-   * ✅ Helper — safely get or create User model for tenant connection
-   */
   private getTenantUserModel(connection): Model<User> {
     return connection.models['User'] || connection.model('User', UserSchema);
   }
 
-  /** REGISTER USER */
   async register(email: string, password: string, user_name: string) {
     if (!email || !password)
       throw new BadRequestException('Email and password are required');
@@ -49,7 +44,7 @@ export class AuthService {
     tenant = await this.tenantModel.create({
       name: user_name,
       email,
-       tenantId: `${user_name.replace(/\s+/g, '_')}_${Date.now()}`,
+      tenantId: `${user_name.replace(/\s+/g, '_')}_${Date.now()}`,
       dbUri: `mongodb://localhost:27017/${user_name.replace(/\s+/g, '_')}_${Date.now()}`,
     });
 
@@ -88,39 +83,33 @@ export class AuthService {
     return { ...safeUser, token };
   }
 
-  /** LOGIN USER */
-  async login(email: string, password: string) {
+  async login(email: string, password: string): Promise<any> {
     const secret = this.configService.get<string>('JWT_SECRET');
     if (!secret)
       throw new BadRequestException('Missing JWT_SECRET in environment');
-
-    // Step 1: Find tenant from main DB
     const tenant = await this.tenantModel.findOne({ email });
     if (!tenant) throw new NotFoundException('No tenant found for this user');
-
-    // Step 2: Connect to tenant DB
     const connection = await this.tenantConnectionService.getConnection(
       tenant.tenantId,
       tenant.dbUri,
     );
     const UserModel = this.getTenantUserModel(connection);
-
-    // Step 3: Find and validate user
-    const user = await UserModel.findOne({ email });
+    const user = await UserModel.findOne({ email }).exec();
     if (!user) throw new NotFoundException('User not found');
-
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new BadRequestException('Invalid password');
-
     const token = jwt.sign({ tenantId: tenant.tenantId, email }, secret, {
       expiresIn: '1h',
     });
-
-    const safeUser = user.toObject();
-    return { ...safeUser, token };
+    try {
+      const userWithPackage = await user.populate('packageId');
+      const safeUser = userWithPackage.toObject();
+      return { ...safeUser, token };
+    } catch (err) {
+      return { ...user.toObject(), token };
+    }
   }
 
-  /** GOOGLE LOGIN */
   async findOrCreateGoogleUser(googleUser: any) {
     const { email, name } = googleUser;
 
@@ -141,7 +130,7 @@ export class AuthService {
 
     const UserModel = this.getTenantUserModel(connection);
 
-    let user = await UserModel.findOne({ email });
+    let user = await UserModel.findOne({ email }).exec();
     if (!user) {
       const randomPassword = await bcrypt.hash(
         Math.random().toString(36).slice(-8),
@@ -152,14 +141,19 @@ export class AuthService {
         user_name: name,
         password: randomPassword,
         tenantId: tenant.tenantId,
+        is_2FA: true,
         googleAuth: true,
       });
     }
-
-    return user;
+    try {
+      const userWithPackage = await user.populate('packageId');
+      const safeUser = userWithPackage.toObject();
+      return safeUser;
+    } catch (err) {
+      return user;
+    }
   }
 
-  /** GENERATE JWT */
   async generateJwt(user: any) {
     const secret = this.configService.get<string>('JWT_SECRET');
     return jwt.sign(
@@ -169,7 +163,6 @@ export class AuthService {
     );
   }
 
-  /** FORGOT PASSWORD */
   async forgetPassword(body: { email: string; password: string; otp: string }) {
     const { email, password } = body;
 
@@ -193,5 +186,19 @@ export class AuthService {
     await user.save();
 
     return { message: 'Password updated successfully' };
+  }
+
+  async getUserData(tenantId: any) {
+    const tenant = await this.tenantModel.findOne({ tenantId });
+    if (!tenant) throw new NotFoundException('No tenant found for this user');
+    const connection = await this.tenantConnectionService.getConnection(
+      tenant.tenantId,
+      tenant.dbUri,
+    );
+    const UserModel = this.getTenantUserModel(connection);
+    const user_data = await UserModel.findOne({ tenantId })
+      .populate('packageId')
+      .exec();
+    return user_data;
   }
 }

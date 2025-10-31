@@ -12,7 +12,6 @@ export class UserProfileService {
     private readonly otpService: OtpService,
   ) {}
 
-  /** Utility: safely get tenant’s User model */
   private getUserModel(): Model<User> {
     if (this.tenantConnection.models['User']) {
       return this.tenantConnection.models['User'];
@@ -88,14 +87,10 @@ export class UserProfileService {
     const UserModel = this.getUserModel();
     const isValidOTP = await this.otpService.verifyOtp(body.email, body.otp);
     if (!isValidOTP) throw new Error('Invalid OTP');
-
     const user = await UserModel.findOne({ email: body.email });
     if (!user) throw new Error('User not found');
-
     user.is_2FA = true;
     await user.save();
-
-    return { message: '2FA updated successfully' };
+    return user;
   }
-
 }

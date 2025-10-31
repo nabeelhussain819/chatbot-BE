@@ -1,7 +1,24 @@
 /* eslint-disable prettier/prettier */
-import { Controller, Get, Post, Put, Req, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Req,
+  Body,
+  UploadedFile,
+  UseInterceptors,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
-import { CreateChatbotDto, ResubscribeChatbotDto, UpdateChatbotStatusDto } from 'src/utils/chatbot.dto';
+import {
+  CreateChatbotDto,
+  DeleteChatbotStatusDto,
+  ResubscribeChatbotDto,
+  UpdateChatbotStatusDto,
+} from 'src/utils/chatbot.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('chatbot')
 export class ChatbotController {
@@ -14,31 +31,36 @@ export class ChatbotController {
     return this.chatbotService.getMyChatbot(tenantId, apiKey);
   }
 
- @Get('getChatbotById')
-getChatbotById(@Req() req, @Query('id') id: string) {
-  const tenantId = req.headers['x-tenant-id'];
-  return this.chatbotService.getChatbotById(id, tenantId);
-}
+  @Get('getChatbotById/:id')
+  getChatbotById(@Req() req, @Param('id') id: string) {
+    const tenantId = req.headers['x-tenant-id'];
+    return this.chatbotService.getChatbotById(id, tenantId);
+  }
 
   @Get('/all-chatbot')
   getAllChatbot() {
     return this.chatbotService.getAllChatbot();
   }
 
-   @Post('/create-chatbot')
-  createChatbot(@Req() req,@Body() dto: CreateChatbotDto) {
-  const tenantId = req.headers['x-tenant-id'];
-    return this.chatbotService.createChatbot(tenantId, dto);
+  @Post('/create-chatbot')
+  @UseInterceptors(FileInterceptor('file'))
+  createChatbot(
+    @Req() req,
+    @Body() dto: CreateChatbotDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const tenantId = req.headers['x-tenant-id'];
+    return this.chatbotService.createChatbot(tenantId, dto, file);
   }
 
   @Put('/deActiveChatbot')
-  deActiveChatbot(@Req() req,@Body() dto: UpdateChatbotStatusDto) {
+  deActiveChatbot(@Req() req, @Body() dto: UpdateChatbotStatusDto) {
     const tenantId = req.headers['x-tenant-id'];
     return this.chatbotService.deActiveChatbot(dto, tenantId);
   }
 
   @Put('/activeChatbot')
-  activeChatbot(@Req() req,@Body() dto: UpdateChatbotStatusDto) {
+  activeChatbot(@Req() req, @Body() dto: UpdateChatbotStatusDto) {
     const tenantId = req.headers['x-tenant-id'];
     return this.chatbotService.activeChatbot(dto, tenantId);
   }
@@ -47,5 +69,21 @@ getChatbotById(@Req() req, @Query('id') id: string) {
   reSubsribeChatbot(@Req() req, @Body() dto: ResubscribeChatbotDto) {
     const tenantId = req.headers['x-tenant-id'];
     return this.chatbotService.reSubsribeChatbot(dto, tenantId);
+  }
+  @Delete('/deleteChatbot/:id/:planId/:knowledgeId')
+  deleteChatbot(@Req() req, @Param() dto: DeleteChatbotStatusDto) {
+    const tenantId = req.headers['x-tenant-id'];
+    return this.chatbotService.deleteChatbot(dto.id, tenantId, dto.planId, dto.knowledgeId);
+  }
+  @Put('/updateChatbot/:id')
+  @UseInterceptors(FileInterceptor('file'))
+  updateChatbot(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() dto: any,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const tenantId = req.headers['x-tenant-id'];
+    return this.chatbotService.updateChatbot(id, dto, tenantId, file);
   }
 }

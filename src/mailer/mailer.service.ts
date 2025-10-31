@@ -21,7 +21,7 @@ export class MailerService {
 
   async sendMail(to: string, subject: string, html: string) {
     await this.transporter.sendMail({
-      from: `"My App" <${process.env.MAIL_USER}>`,
+      from: `"AfterShock AI" <${process.env.MAIL_USER}>`,
       to,
       subject,
       html,

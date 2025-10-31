@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 // src/auth/user.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 @Schema()
 export class User extends Document {
@@ -34,6 +34,9 @@ export class User extends Document {
 
   @Prop({ required: false, default: false })
   marketing_notification: boolean;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Package', required: false, default: null })
+  packageId: mongoose.Schema.Types.ObjectId;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Req } from '@nestjs/common';
 import { CardService } from './card.service';
 import { CreateCardDto } from 'src/utils/card.dto';
 
@@ -21,5 +21,15 @@ export class CardController {
      const tenantId = req.headers['x-tenant-id'];
      const payload = { ...createCardDto, tenantId };
     return this.cardService.addCard(payload);
+  }
+  @Post('update-card')
+  updateCard(@Req() req, @Body() createCardDto: any) {
+    const tenantId = req.headers['x-tenant-id'];
+    const payload = { ...createCardDto, tenantId };
+    return this.cardService.updateCard(createCardDto._id, payload);
+  }
+  @Delete('delete-card/:id')
+  deleteCard(@Param() param: any) {
+    return this.cardService.deleteCard(param.id);
   }
 }
