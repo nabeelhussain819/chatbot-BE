@@ -45,7 +45,7 @@ export class AuthService {
       name: user_name,
       email,
       tenantId: `${user_name.replace(/\s+/g, '_')}_${Date.now()}`,
-      dbUri: `mongodb://localhost:27017/${user_name.replace(/\s+/g, '_')}_${Date.now()}`,
+      dbUri: `${process.env.MONGODB_URI}${user_name.replace(/\s+/g, '_')}_${Date.now()}`,
     });
 
     // Step 3: Create connection to this tenant's DB
@@ -119,7 +119,7 @@ export class AuthService {
         name,
         email,
         tenantId: `${name.replace(/\s+/g, '_')}_${Date.now()}`,
-        dbUri: `mongodb://localhost:27017/${name.replace(/\s+/g, '_')}_${Date.now()}`,
+        dbUri: `process.env.MONGODB_URI${name.replace(/\s+/g, '_')}_${Date.now()}`,
       });
     }
 

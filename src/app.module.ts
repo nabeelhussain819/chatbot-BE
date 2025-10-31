@@ -34,7 +34,7 @@ import * as path from 'path';
     ChatModule,
     AuthModule,
     TenantsModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/tenant-auth'),
+    MongooseModule.forRoot(`${process.env.MONGODB_URI}tenant-auth`),
     UserProfileModule,
     CardModule,
     OtpModule,

@@ -13,7 +13,7 @@ export const TenantConnectionProvider: FactoryProvider<Promise<Connection>> = {
     const tenantId = req.headers['x-tenant-id'] as string;
     if (!tenantId) throw new Error('Missing x-tenant-id header');
 
-    const mongoURI = `mongodb://localhost:27017/${tenantId}`;
+    const mongoURI = `${process.env.MONGODB_URI}${tenantId}`;
     const connection = await createConnection(mongoURI);
     return connection;
   },
